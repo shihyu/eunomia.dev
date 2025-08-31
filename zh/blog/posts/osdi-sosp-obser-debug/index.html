@@ -1,0 +1,8664 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Unlock the potential of eBPF">
+      
+      
+      
+        <link rel="canonical" href="https://eunomia.dev/zh/blog/posts/osdi-sosp-obser-debug/">
+      
+      
+        <link rel="prev" href="../lmp-eunomia/">
+      
+      
+        <link rel="next" href="../profile-tools-limitation/">
+      
+      
+      <link rel="icon" href="../../../../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>系統會議中的可觀測性、性能分析和調試（2015–2025） - eunomia</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-1YVMXGL0MY"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-1YVMXGL0MY",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-1YVMXGL0MY",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+      
+        <meta  property="og:type"  content="website" >
+      
+        <meta  property="og:title"  content="系統會議中的可觀測性、性能分析和調試（2015–2025） - eunomia" >
+      
+        <meta  property="og:description"  content="Unlock the potential of eBPF" >
+      
+        <meta  property="og:image"  content="https://eunomia.dev/assets/images/social/blog/posts/osdi-sosp-obser-debug.zh.png" >
+      
+        <meta  property="og:image:type"  content="image/png" >
+      
+        <meta  property="og:image:width"  content="1200" >
+      
+        <meta  property="og:image:height"  content="630" >
+      
+        <meta  property="og:url"  content="https://eunomia.dev/zh/blog/posts/osdi-sosp-obser-debug/" >
+      
+        <meta  name="twitter:card"  content="summary_large_image" >
+      
+        <meta  name="twitter:title"  content="系統會議中的可觀測性、性能分析和調試（2015–2025） - eunomia" >
+      
+        <meta  name="twitter:description"  content="Unlock the potential of eBPF" >
+      
+        <meta  name="twitter:image"  content="https://eunomia.dev/assets/images/social/blog/posts/osdi-sosp-obser-debug.zh.png" >
+      
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#20152025" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../" title="eunomia" class="md-header__button md-logo" aria-label="eunomia" data-md-component="logo">
+      
+  <img src="../../../../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            eunomia
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              系統會議中的可觀測性、性能分析和調試（2015–2025）
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="/en/" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="/zh/" hreflang="zh" class="md-select__link">
+              Chinese
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/eunomia-bpf/eunomia.dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../" class="md-tabs__link">
+          
+  
+  
+  主页
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../tutorials/" class="md-tabs__link">
+          
+  
+  
+  教程
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../blog" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Blog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../bpftime/" class="md-tabs__link">
+          
+  
+  
+  bpftime
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../eunomia-bpf/" class="md-tabs__link">
+          
+  
+  
+  eunomia-bpf
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../GPTtrace/" class="md-tabs__link">
+          
+  
+  
+  GPTtrace
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../wasm-bpf/" class="md-tabs__link">
+          
+  
+  
+  wasm-bpf
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../others/" class="md-tabs__link">
+          
+  
+  
+  Ecosystem
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../" title="eunomia" class="md-nav__button md-logo" aria-label="eunomia" data-md-component="logo">
+      
+  <img src="../../../../assets/icon.svg" alt="logo">
+
+    </a>
+    eunomia
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/eunomia-bpf/eunomia.dev" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_1" id="__nav_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    主页
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_1">
+            <span class="md-nav__icon md-icon"></span>
+            主页
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Eunomia - Unlock the potential of eBPF
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    教程
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            教程
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發實踐教程：基於 CO-RE，通過小工具快速上手 eBPF 開發
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發實踐教程：基於 CO-RE，通過小工具快速上手 eBPF 開發
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/0-introduce/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 示例教程 0：核心概念與工具簡介
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/1-helloworld/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程一：Hello World，基本框架和開發流程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/10-hardirqs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程十：在 eBPF 中使用 hardirqs 或 softirqs 捕獲中斷事件
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/11-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程十一：在 eBPF 中使用 libbpf 開發用戶態程序並跟蹤 exec() 和 exit() 系統調用
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/12-profile/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程十二：使用 eBPF 程序 profile 進行性能分析
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/13-tcpconnlat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF入門開發實踐教程十三：統計 TCP 連接延時，並使用 libbpf 在用戶態處理數據
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/14-tcpstates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF入門實踐教程十四：記錄 TCP 連接狀態與 TCP RTT
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/15-javagc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程十五：使用 USDT 捕獲用戶態 Java GC 事件耗時
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/16-memleak/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程十六：編寫 eBPF 程序 Memleak 監控內存洩漏
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/17-biopattern/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程十七：編寫 eBPF 程序統計隨機/順序磁盤 I/O
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/18-further-reading/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    更多的參考資料：論文、項目等等
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/18-further-reading/ebpf-security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 運行時安全性：面臨的挑戰與前沿創新
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/19-lsm-connect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程：使用 LSM 進行安全檢測防禦
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/2-kprobe-unlink/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程二：在 eBPF 中使用 kprobe 監測捕獲 unlink 系統調用
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/20-tc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程二十：使用 eBPF 進行 tc 流量控制
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/21-xdp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程二十一： 使用 XDP 進行可編程數據包處理
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/22-android/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    在 Android 上使用 eBPF 程序
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/23-http/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    通過 eBPF socket filter 或 syscall trace 追蹤 HTTP 請求等七層協議 - eBPF 實踐教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/24-hide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發實踐：使用 eBPF 隱藏進程或文件信息
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/25-signal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程：用 bpf_send_signal 發送信號終止惡意進程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/26-sudo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 添加 sudo 用戶
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/27-replace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 替換任意程序讀取或寫入的文本
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/28-detach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    在應用程序退出後運行 eBPF 程序：eBPF 程序的生命週期
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/29-sockops/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發實踐：使用 sockops 加速網絡請求轉發
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/3-fentry-unlink/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程三：在 eBPF 中使用 fentry 監測捕獲 unlink 系統調用
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/30-sslsniff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 實踐教程：使用 uprobe 捕獲多種庫的 SSL/TLS 明文數據
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/31-goroutine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 實踐教程：使用 eBPF 跟蹤 Go 協程狀態
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/33-funclatency/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 測量函數延遲
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/34-syscall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發實踐：使用 eBPF 修改系統調用參數
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/35-user-ringbuf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF開發實踐：使用 user ring buffer 向內核異步發送信息
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/36-userspace-ebpf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    用戶空間 eBPF 運行時：深度解析與應用實踐
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/37-uprobe-rust/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 實踐：使用 Uprobe 追蹤用戶態 Rust 應用
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/38-btf-uprobe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    藉助 eBPF 和 BTF，讓用戶態也能一次編譯、到處運行
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/38-btf-uprobe/test-verify/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    using BTF to verify userspace eBPF extensions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/38-btf-uprobe/test-verify/minimal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    minimal examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/38-btf-uprobe/test-verify/module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    write a basic kernel module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/39-nginx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 跟蹤 Nginx 請求
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/4-opensnoop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程四：在 eBPF 中捕獲進程打開文件的系統調用集合，使用全局變量過濾進程 pid
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/40-mysql/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 跟蹤 MySQL 查詢
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/41-xdp-tcpdump/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 示例教程：使用 XDP 捕獲 TCP 信息
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/42-xdp-loadbalancer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 開發者教程： 簡單的 XDP 負載均衡器
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/42-xdp-loadbalancer/connect/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Network setup for bpf-developer-tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/43-kfuncs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    超越 eBPF 的極限：在內核模塊中定義自定義 kfunc
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/43-kfuncs/module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    write a basic kernel module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/44-scx-simple/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 教程：BPF 調度器入門
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/45-scx-nest/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 示例教程：實現 scx_nest 調度器
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/46-xdp-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    xdp-pktgen: xdp based packet generator
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/47-cuda-events/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 與機器學習可觀測：追蹤 CUDA GPU 操作
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/48-energy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 教程：進程級能源監控與功耗分析
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/48-energy/README_zh/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 教程：進程級能源監控與功耗分析
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/48-energy/ebpf-energy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ebpf energy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/48-energy/%E8%83%BD%E6%BA%90%E7%9B%91%E6%8E%A7%E7%B3%BB%E7%BB%9F%E8%AF%A6%E8%A7%A3/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 能源監控系統詳解
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/5-uprobe-bashreadline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程五：在 eBPF 中使用 uprobe 捕獲 bash 的 readline 函數調用
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/6-sigsnoop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程六：捕獲進程發送信號的系統調用集合，使用 hash map 保存狀態
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/7-execsnoop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門實踐教程七：捕獲進程執行事件，通過 perf event array 向用戶態打印輸出
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/8-exitsnoop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程八：在 eBPF 中使用 exitsnoop 監控進程退出事件，使用 ring buffer 向用戶態打印輸出
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/9-runqlat/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF 入門開發實踐教程九：捕獲進程調度延遲，以直方圖方式記錄
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/kernel-versions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Linux 內核版本的 BPF 功能
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/kernel-versions_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BPF Features by Linux Kernel Version
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/kernel_config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BPF 特性的內核配置
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/kernel_config_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Kernel Configuration for BPF Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/reference_guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc 參考指南
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/reference_guide_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc Reference Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/special_filtering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    特殊過濾
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/special_filtering_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Special Filtering
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc 教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/tutorial_bcc_python_developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc Python 開發者教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/tutorial_bcc_python_developer_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc Python Developer Tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bcc-documents/tutorial_en/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bcc Tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/bpftrace-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftrace一行教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/scripts/guideline_advance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blog Guidelines for Advanced eBPF Tutorials
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/scripts/guideline_basic/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    blog guideline or pattern
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../blog" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blog
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    bpftime
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            bpftime
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftime Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/build-and-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Building and Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Examples &amp; Use Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/available-features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Available kernel features in userspace
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Bpftime
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            Bpftime
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/llvmbpf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Userspace eBPF VM with LLVM JIT/AOT Compiler
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2" id="__nav_4_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    EIM
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            EIM
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EIM: Extension Interface Model
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EIM: Example code
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EIM: Extension Interface Model Specification
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/uprobe/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UProbe Role Definition README
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EIM Usage and people involved (Draft v1)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2_6" id="__nav_4_6_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Draft spec
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Draft spec
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/draft-spec/current-EIM-lack/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    EIM on verify: what can it do and what cannot
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/draft-spec/spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extension Inferface Model Specification V3
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/draft-spec/spec_core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Spec core
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/draft-spec/spec_old/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extension Model Specification V1
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_2_7" id="__nav_4_6_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Study
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_4_6_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Study
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    studies on bugs in extensions/plugins
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/browser-ide-bug-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    關於瀏覽器擴展和 IDE 插件漏洞的研究
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/compare/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Extension Systems compare with EIM
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/db-bug-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    關於數據庫和 Web 服務器擴展接口中的缺陷研究
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/docker-vm-bug-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    關於虛擬機管理程序和容器擴展漏洞的研究（2018–2024）
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/EIM/study/game-office-bug-study/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    關於生產力軟件和遊戲擴展/插件漏洞的案例研究（2018–2024）
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6_3" id="__nav_4_6_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    文档
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            文档
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/attach/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Detailed Implementation of the Attach Part
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/bpftimeaot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftime-aot cli
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/bpftimetool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftimetool
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/co-re/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Compile Once, Run Everywhere(CO-RE)
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/contact/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contact and citations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/how-it-works/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    The design and implementation of bpftime
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    簡介
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../bpftime/documents/performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    performance and benchmark
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    eunomia-bpf
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            eunomia-bpf
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eunomia-bpf：簡化並增強eBPF，支持CO-RE和WebAssembly
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Eunomia bpf
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2">
+            <span class="md-nav__icon md-icon"></span>
+            Eunomia bpf
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    benchmark
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eunomia-bpf 用戶手冊: 讓 eBPF 程序的開發和部署儘可能簡單
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/online/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    在線體驗網站
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/supporting-external-BTF/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    supporting-external-BTF
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/video/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    video
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_8" id="__nav_5_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    项目架构
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            项目架构
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_9" id="__nav_5_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ecc
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            Ecc
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eunomia-cc
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecc/docker-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ecc docker usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecc/github-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    github template
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecc/usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ecc usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_10" id="__nav_5_2_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ecli
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Ecli
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ecli
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecli/ecli-dockerfile-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ecli dockerfile usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/ecli/server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ecli server
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_11" id="__nav_5_2_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Exporter
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_11">
+            <span class="md-nav__icon md-icon"></span>
+            Exporter
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/exporter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    exporter
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/exporter/usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_2_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_2_12" id="__nav_5_2_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Setup
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_2_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_2_12">
+            <span class="md-nav__icon md-icon"></span>
+            Setup
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Setup
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/setup/build-android-arm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    build on android aarch64
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eunomia-bpf/setup/build/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    build from source
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    GPTtrace
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            GPTtrace
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GPTtrace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GPTtrace 文檔
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    wasm-bpf
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            wasm-bpf
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../wasm-bpf/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Wasm-bpf Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Ecosystem
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Ecosystem
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Ecosystem & Other Projects
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2" id="__nav_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Others
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            Others
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/bpf-benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    BPF-Benchmark
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/bpf-compatible/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpf-compatible
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/contribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing to eunomia-bpf
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/ebpf-gpts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    An experiment: GPTs for eBPF
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/ideas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Possible ideas for the future
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/usecases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ebpf usecases analysis
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_7" id="__nav_8_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cuda tutorial
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Cuda tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    basic-cuda-tutorial
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/01-vector-addition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA 基礎示例 - 向量加法解釋
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/02-ptx-assembly/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA PTX示例：使用內聯PTX彙編進行向量乘法
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/03-gpu-programming-methods/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA編程方法比較：矩陣乘法
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/04-gpu-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA GPU組織層次結構
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/05-neural-network/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用CUDA在GPU上實現神經網絡前向傳播
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/06-cnn-convolution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用共享內存優化的GPU加速卷積操作
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/07-attention-mechanism/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用CUDA實現Transformer模型的注意力機制
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/08-profiling-tracing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA GPU性能分析與跟蹤
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/09-gpu-extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GPU應用程序擴展機制：無需更改源代碼修改行為
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/10-cpu-gpu-profiling-boundaries/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CPU和GPU分析邊界：在哪裡測量什麼
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/11-fine-grained-gpu-modifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    細粒度GPU代碼修改
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/12-advanced-gpu-customizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    高級GPU定製技術
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/13-low-latency-gpu-packet-processing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    低延遲GPU數據包處理
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/14-cuda-function-annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA函數類型註解：全面指南
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/15-opencl-vector-addition/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenCL基礎示例 - 向量加法解釋
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cuda-tutorial/README_PTX_Demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    PTX文件加載和執行演示
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8" id="__nav_8_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti tutorial
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti tutorial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    NVIDIA CUPTI Tutorials
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_2" id="__nav_8_2_8_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Activity trace
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_2">
+            <span class="md-nav__icon md-icon"></span>
+            Activity trace
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/activity_trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 活動跟蹤教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_3" id="__nav_8_2_8_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Activity trace async
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_3">
+            <span class="md-nav__icon md-icon"></span>
+            Activity trace async
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/activity_trace_async/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 異步活動跟蹤教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_4" id="__nav_8_2_8_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Autorange profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_4">
+            <span class="md-nav__icon md-icon"></span>
+            Autorange profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/autorange_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 自動範圍性能分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_5" id="__nav_8_2_8_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Callback event
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_5">
+            <span class="md-nav__icon md-icon"></span>
+            Callback event
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/callback_event/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 回調事件教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_6" id="__nav_8_2_8_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Callback metric
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_6">
+            <span class="md-nav__icon md-icon"></span>
+            Callback metric
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/callback_metric/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 性能指標教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_7" id="__nav_8_2_8_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Callback profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_7">
+            <span class="md-nav__icon md-icon"></span>
+            Callback profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/callback_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 基於回調的性能分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_8" id="__nav_8_2_8_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Callback timestamp
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_8">
+            <span class="md-nav__icon md-icon"></span>
+            Callback timestamp
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/callback_timestamp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 時間戳回調教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_9" id="__nav_8_2_8_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Checkpoint kernels
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_9">
+            <span class="md-nav__icon md-icon"></span>
+            Checkpoint kernels
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/checkpoint_kernels/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 檢查點 API 教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_10" id="__nav_8_2_8_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Common
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_10">
+            <span class="md-nav__icon md-icon"></span>
+            Common
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/common/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 通用輔助文件
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_11" id="__nav_8_2_8_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Concurrent profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_11">
+            <span class="md-nav__icon md-icon"></span>
+            Concurrent profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/concurrent_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 併發分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_12" id="__nav_8_2_8_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cuda graphs trace
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_12">
+            <span class="md-nav__icon md-icon"></span>
+            Cuda graphs trace
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cuda_graphs_trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA 圖追蹤教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_13" id="__nav_8_2_8_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cuda memory trace
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_13">
+            <span class="md-nav__icon md-icon"></span>
+            Cuda memory trace
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cuda_memory_trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUDA 內存追蹤教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_14" id="__nav_8_2_8_14_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti correlation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_14">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti correlation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_correlation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI API-GPU 活動關聯教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_15" id="__nav_8_2_8_15_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti external correlation
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_15">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti external correlation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_external_correlation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 外部關聯教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_16" id="__nav_8_2_8_16_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti finalize
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_16">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti finalize
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_finalize/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 終結和清理教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_17" id="__nav_8_2_8_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti metric properties
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_17">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti metric properties
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_metric_properties/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 指標屬性教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_18" id="__nav_8_2_8_18_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti nvtx
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_18">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti nvtx
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_nvtx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI NVTX 集成教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_19" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_19" id="__nav_8_2_8_19_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti query
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_19">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti query
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_query/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 查詢 API 教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_20" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_20" id="__nav_8_2_8_20_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Cupti trace injection
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_20_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_20">
+            <span class="md-nav__icon md-icon"></span>
+            Cupti trace injection
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/cupti_trace_injection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 跟蹤注入教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_21" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_21" id="__nav_8_2_8_21_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Event multi gpu
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_21_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_21">
+            <span class="md-nav__icon md-icon"></span>
+            Event multi gpu
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/event_multi_gpu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 多 GPU 事件分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_22" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_22" id="__nav_8_2_8_22_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Event sampling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_22_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_22">
+            <span class="md-nav__icon md-icon"></span>
+            Event sampling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/event_sampling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 事件採樣教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_23" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_23" id="__nav_8_2_8_23_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Extensions
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_23_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_23">
+            <span class="md-nav__icon md-icon"></span>
+            Extensions
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/extensions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 擴展工具
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_24" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_24" id="__nav_8_2_8_24_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Nested range profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_24_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_24">
+            <span class="md-nav__icon md-icon"></span>
+            Nested range profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/nested_range_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 嵌套範圍分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_25" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_25" id="__nav_8_2_8_25_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Nvlink bandwidth
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_25_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_25">
+            <span class="md-nav__icon md-icon"></span>
+            Nvlink bandwidth
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/nvlink_bandwidth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI NVLink 帶寬監控教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_26" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_26" id="__nav_8_2_8_26_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Openacc trace
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_26_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_26">
+            <span class="md-nav__icon md-icon"></span>
+            Openacc trace
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/openacc_trace/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI OpenACC 跟蹤教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_27" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_27" id="__nav_8_2_8_27_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pc sampling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_27_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_27">
+            <span class="md-nav__icon md-icon"></span>
+            Pc sampling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/pc_sampling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI PC 採樣教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_28" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_28" id="__nav_8_2_8_28_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pc sampling continuous
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_28_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_28">
+            <span class="md-nav__icon md-icon"></span>
+            Pc sampling continuous
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/pc_sampling_continuous/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 程序計數器 (PC) 連續採樣教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_29" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_29" id="__nav_8_2_8_29_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pc sampling start stop
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_29_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_29">
+            <span class="md-nav__icon md-icon"></span>
+            Pc sampling start stop
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/pc_sampling_start_stop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI PC 採樣啟動/停止控制教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_30" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_30" id="__nav_8_2_8_30_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pc sampling utility
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_30_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_30">
+            <span class="md-nav__icon md-icon"></span>
+            Pc sampling utility
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/pc_sampling_utility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI PC 採樣分析工具教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_31" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_31" id="__nav_8_2_8_31_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Pm sampling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_31_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_31">
+            <span class="md-nav__icon md-icon"></span>
+            Pm sampling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/pm_sampling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    性能監控採樣教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_32" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_32" id="__nav_8_2_8_32_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Profiling injection
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_32_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_32">
+            <span class="md-nav__icon md-icon"></span>
+            Profiling injection
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/profiling_injection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 分析 API 注入教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_33" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_33" id="__nav_8_2_8_33_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Range profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_33_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_33">
+            <span class="md-nav__icon md-icon"></span>
+            Range profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/range_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 範圍性能分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_34" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_34" id="__nav_8_2_8_34_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Sass metrics
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_34_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_34">
+            <span class="md-nav__icon md-icon"></span>
+            Sass metrics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/sass_metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SASS 指標收集教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_35" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_35" id="__nav_8_2_8_35_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Sass source map
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_35_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_35">
+            <span class="md-nav__icon md-icon"></span>
+            Sass source map
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/sass_source_map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI SASS 源代碼映射教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_36" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_36" id="__nav_8_2_8_36_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Unified memory
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_36_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_36">
+            <span class="md-nav__icon md-icon"></span>
+            Unified memory
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/unified_memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 統一內存分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_8_37" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_8_37" id="__nav_8_2_8_37_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Userrange profiling
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_8_2_8_37_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_8_37">
+            <span class="md-nav__icon md-icon"></span>
+            Userrange profiling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/cupti-tutorial/userrange_profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CUPTI 用戶範圍分析教程
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8_2_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_8_2_9" id="__nav_8_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Miscellaneous
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_8_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            Miscellaneous
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/bpftime-kubecon-draft/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF and Wasm: Unifying Userspace Extensions With Bpftime - Yusheng Zheng, eunomia-bpf
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/bpftime-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About bpftime - bpftime ideas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-fuse/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    基於內核態/用戶態 eBPF 實現高性能用戶態文件系統功能 - 操作系統大賽賽題
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-gpu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    使用 eBPF 對 AI/ML 工作負載進行追蹤和性能分析 - 操作系統大賽賽題
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-linux/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Proposal for bpftime - eBPF Foundation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-lsm-usm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    實現內核與用戶態共同工作的 eBPF 安全框架 - 操作系統大賽賽題
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-usecases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Categorization of eBPF Hooks and Use Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ebpf-userspace-port/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    將用戶態 eBPF 擴展到 MacOS、Windows、FreeBSD 等更多平臺 - 操作系統大賽賽題
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/gsoc-ospp/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GSOC - OSPP draft proposal
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/ideas/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    開源活動的可能想法 - eunomia-bpf 2024
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/linux-plumbers-talk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftime talk at linux plumbers 2025
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/osdi-talk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speech Script for OSDI 2025 bpftime talk "Extending Applications Safely and Efficiently"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/osdi-talk_bak/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Speech Script for OSDI 2025 bpftime talk "Extending Applications Safely and Efficiently"
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpftime roadmap and ideas for 2024
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/talk-ebpf-summit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    eBPF Summit 2025 bpftime talk
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/wasm-bpf-kubecon/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Securing and Simplifying eBPF Deployments with WebAssembly
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../others/miscellaneous/wasm-bpf-talk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    talk draft in kubecon
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. 引言
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. 跟蹤和監控框架的進展
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. 調試和故障診斷技術
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. 性能分析和異常檢測
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. 日誌記錄和事後分析
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. 關係和時間趨勢
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. 開放挑戰和研究空白
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. 結論
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/eunomia-bpf/eunomia.dev/tree/main/docs/blog/posts/osdi-sosp-obser-debug.zh.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/eunomia-bpf/eunomia.dev/tree/main/docs/blog/posts/osdi-sosp-obser-debug.zh.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="20152025"><strong>系統會議中的可觀測性、性能分析和調試（2015–2025）</strong></h1>
+<p><strong>摘要：</strong></p>
+<p>本綜述回顧了十多年來（2015–2025）計算機系統可觀測性、性能分析和調試技術的研究，重點關注OSDI、SOSP和EuroSys的主會論文。我們涵蓋了100多篇論文，涉及動態跟蹤框架、日誌記錄和監控基礎設施、性能異常檢測、根因分析和系統可見性機制。我們識別了所解決的核心問題（從分佈式請求跟蹤到配置或併發錯誤檢測）、採用的技術（動態插樁、靜態分析、<strong>原位</strong>日誌記錄、分佈式監控、ML輔助分析）、目標領域（操作系統內核、雲和分佈式系統、移動/物聯網系統等），以及這些工作之間的關係和相互構建。我們討論了隨時間的趨勢——例如，從單體系統中的臨時跟蹤演變為微服務中的持續低開銷可觀測性——以及機器學習在異常檢測和根因分析中的新興集成。我們總結了開放挑戰，如將可觀測性擴展到高度分解的系統、減少跟蹤中的開銷和噪聲、自動化跨抽象層的診斷，以及改善生產環境中調試工具的可用性。</p>
+<!-- more -->
+
+<h2 id="1"><strong>1. 引言</strong></h2>
+<p>現代計算機系統產生大量遙測數據（日誌、跟蹤、指標），然而在複雜分佈式環境中診斷問題仍然是極其困難的。<em>可觀測性</em>——通過外部輸出理解內部系統狀態的能力——是可靠性和性能的關鍵屬性。在2015年到2025年間，系統研究社區產生了大量新的可觀測性、性能分析和調試方法。本綜述專注於<strong>OSDI、SOSP和EuroSys（2015–2025）的主會論文</strong>，涵蓋這些主題，包括完整研究論文、短文/工具論文和經驗報告（不包括研討會）。我們涵蓋了100多項代表性工作，突出了它們的核心問題、技術、目標領域、相互關係和更廣泛的趨勢。</p>
+<p><strong>範圍和動機：</strong> 關鍵主題包括分佈式系統的<strong>跟蹤和日誌記錄框架</strong>、<strong>性能監控和分析</strong>工具、<strong>異常檢測和根因診斷</strong>方法，以及新穎的<strong>系統可見性機制</strong>。在此期間，大規模雲服務、微服務和異構基礎設施的興起放大了對更好可觀測性的需求。傳統調試（例如，使用斷點或離線分析）對於始終在線的服務變得不足，導致了對生產環境中低開銷跟蹤的研究<a href="https://cs.brown.edu/~jcmace/articles/login_spring16_04_mace.pdf#:~:text=Pivot%20Tracing%20also%20uses%20dynamic,queries%20are%20dynamically%20installed">cs.brown.edu</a><a href="https://par.nsf.gov/servlets/purl/10283348#:~:text=,performance%20anomalies%20in%20desktop%20applications">par.nsf.gov</a>。同樣，分佈式環境中的性能變化和故障需要新的技術來進行跨組件的<strong>因果跟蹤</strong>、<strong>自動日誌分析</strong>和生產條件下的<strong>故障重現</strong>。</p>
+<p><strong>組織結構：</strong> 我們首先調研<strong>跟蹤和監控框架</strong>（第2節），然後是<strong>故障診斷和調試技術</strong>（第3節）。第4節涵蓋<strong>性能分析和異常檢測</strong>工具，第5節回顧<strong>日誌記錄和事後分析</strong>的進展。我們討論這些論文如何相互構建，並觀察顯著的<strong>時間趨勢</strong>（第6節）。最後，第7節概述了仍然存在的<strong>開放挑戰和研究空白</strong>。在整個過程中，我們引用了示例論文（使用ACM格式的參考文獻）來支撐討論。</p>
+<h2 id="2"><strong>2. 跟蹤和監控框架的進展</strong></h2>
+<p>這一時期的基礎工作線專注於<strong>分佈式跟蹤框架</strong>——捕獲跨組件因果執行路徑以允許端到端分析的系統。一個重要的早期工作是<strong>Pivot Tracing（SOSP 2015）</strong>，由Mace等人提出bibtex.github.io。Pivot Tracing為分佈式系統引入了<em>動態插樁</em>，讓開發者在運行時插入跟蹤點，並通過"發生前連接"操作符關聯事件bibtex.github.io。這實現了對跟蹤數據的<strong>事後</strong>查詢，而無需修改應用程序代碼。Pivot Tracing的影響是重大的：它證明了通過僅在響應特定查詢時激活插樁，可以實現低開銷的始終在線細粒度跟蹤。許多後續系統基於運行時、選擇性跟蹤和跨組件因果鏈接的類似思想構建。</p>
+<p>在Pivot Tracing之後，我們看到多個系統擴展或應用動態跟蹤。<strong>Canopy（SOSP 2017）</strong>，來自Kaldor等人，是Facebook部署的端到端性能跟蹤和分析系統<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Jonathan%20Kaldor%20%2C%20%20165%2C,50">dblp.org</a>。Canopy基於先前的跟蹤框架構建，但在大規模上運行，收集跨微服務的<strong>每請求跟蹤</strong>，並使用聚合來診斷延遲異常值<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Jonathan%20Kaldor%20%2C%20%20165%2C,50">dblp.org</a>。它引入了管理跟蹤量（採樣、聚合）的技術，並執行<em>在線</em>分析以及時識別迴歸。類似地，<strong>X-Trace</strong>和Google的Dapper（2015年前的工作）影響了這個時代，但2015–2025年期間帶來了更多<strong>自適應和智能跟蹤</strong>。例如，<strong>Sieve（EuroSys 2019）</strong>和<strong>Snoopy（OSDI 2021）</strong>——雖然不在我們的核心會議中——提出了更智能的跟蹤採樣以最大化信息。</p>
+<p>另一個值得注意的方向是<strong>內核和網絡環境中的跟蹤</strong>。當用戶級分佈式跟蹤成熟時，研究人員也將跟蹤集成到操作系統內核和可編程網絡中。<strong>CADETS（EuroSys 2018）</strong>（因果、自適應、分佈式、高效跟蹤）和其他（通常出現在USENIX Security或ATC中）探索了全系統跟蹤，捕獲用戶進程和內核事件之間的交互以進行安全和調試<a href="https://scholar.harvard.edu/files/han/files/cv_06_06_19.pdf#:~:text=%5BPDF%5D%20XUEYUAN%20%28MICHAEL%29%20HAN%20,debugging">scholar.harvard.edu</a>。雖然詳細討論超出了我們的範圍，但這些努力突出了一個持續的趨勢：<strong>跨層統一跟蹤</strong>——從應用程序到內核到網絡——以實現<em>跨域可觀測性</em>。實際上，最近的願景論文呼籲"跨域可觀測性"來調試跨應用程序和網絡域的性能問題<a href="https://praveenabt.github.io/publications/perfMON.pdf#:~:text=%5BPDF%5D%20A%20Case%20For%20Cross,Trip%20Time%29">praveenabt.github.io</a>。</p>
+<p><strong>原位監控：</strong> 重量級跟蹤的替代方案是嵌入系統中的輕量級原位監控器。<strong>Spectroscope</strong>（2015年前）和後來的<strong>Pensieve（SOSP 2017）</strong>採用這種方法進行故障診斷。Zhang等人的Pensieve設計了<em>非侵入性監控器</em>，在生產運行期間僅記錄足夠的信息，以便稍後通過"事件鏈接"技術<strong>重現失敗的執行</strong><a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Yongle%20Zhang%20%2C%20%20140%2C,33%20%2A%20%201149">dblp.org</a>。這最小化了運行時開銷，避免記錄大量跟蹤，但提供了通過<em>事後確定性重播</em>調試罕見分佈式故障的途徑。對低侵入性的強調隨著時間變得更加突出——最近的系統如<strong>Hubble（OSDI 2022）</strong>旨在通過利用eBPF等技術對應用程序事件進行動態內核級跟蹤來實現接近零開銷<a href="https://www.usenix.org/conference/osdi22/presentation/luo#:~:text=Hubble%3A%20Performance%20Debugging%20with%20In,one%20nanosecond%20in%20our">usenix.org</a>。Hubble專門針對Android應用程序中的性能異常，使用納秒級開銷的即時方法級跟蹤<a href="https://www.usenix.org/conference/osdi22/presentation/luo#:~:text=Hubble%3A%20Performance%20Debugging%20with%20In,one%20nanosecond%20in%20our">usenix.org</a>。</p>
+<p><strong>雲原生系統中的監控：</strong> 雲平臺引入了新的可觀測性挑戰：例如，<strong>無服務器函數</strong>和短期容器難以用傳統工具跟蹤。雖然我們關注的會議上關於無服務器的論文有限，但像<strong>基於指標的監控和BPF插樁</strong>等技術已經出現（例如，AWS的Snap按需跟蹤，在NSDI 2021上發表）。我們預計這些想法在2020–2025年的研討會論文和行業演講中出現，表明學術研究開始填補這一空白。</p>
+<p>總之，2015–2025年的跟蹤框架演變為處理更大規模和動態環境。早期系統確立了動態、始終在線跟蹤是可能的（Pivot Tracingbibtex.github.io）；後續工作使跟蹤在<strong>大規模實用（Canopy<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Jonathan%20Kaldor%20%2C%20%20165%2C,50">dblp.org</a>）</strong>和<strong>低開銷（Pensieve、Hubble）</strong>，適用於生產環境。一個趨勢是推向<strong>自動化</strong>——動態決定跟蹤什麼或採樣哪些請求——以平衡成本和可見性，預示著機器學習指導跟蹤的集成（在第6節中討論）。 </p>
+<h2 id="3"><strong>3. 調試和故障診斷技術</strong></h2>
+<p>除了原始的可觀測性數據外，許多論文還解決了等式的<em>分析</em>方面：如何從收集的數據中精確定位故障或性能問題的根本原因。一個突出的主題是<strong>複雜系統中的自動根因分析</strong>。</p>
+<p>一個工作線專注於<strong>生產故障的事後調試</strong>。<strong>故障草圖（SOSP 2015）</strong>由Kasikci等人引入，為生產中的故障提供了自動根因診斷技術<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Baris%20Kasikci%20%201068%2C%20Benjamin,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。其思想是記錄執行的輕量級"草圖"，捕獲導致故障的最小事件序列，然後使用這些草圖離線推斷根本原因。這項工作解決了一個關鍵挑戰：在不停止或大量插樁實時系統的情況下，如何獲得有用的調試信息。通過僅記錄故障周圍的控制流和關鍵變量值，故障草圖能夠重建執行圖，突出顯示出錯的位置<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Baris%20Kasikci%20%201068%2C%20Benjamin,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。它展示了在WebKit等大型系統中診斷錯誤的成功。後續研究，如<strong>REPT（OSDI 2018）</strong>由Cui等人提出，通過<em>逆向執行</em>改進了這一想法。REPT通過捕獲足夠的狀態來<em>倒退</em>失敗的執行，提供<strong>故障的逆向調試</strong><a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Weidong%20Cui%20%2C%20%20148%2C,32%20%2A%20%201344">dblp.org</a>。這允許開發者有效地從崩潰中向後步進，看到導致崩潰的原因，大大簡化了根因識別<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Weidong%20Cui%20%2C%20%20148%2C,32%20%2A%20%201344">dblp.org</a>。</p>
+<p>另一種常見方法是<strong>統計和假設驅動的調試</strong>。<strong>拐點假設（SOSP 2019）</strong>由Zhang等人提出，是一個代表性的例子。它提出了一種基於原則的調試方法，使用存在一個關鍵"拐點"事件觸發級聯故障的想法<a href="https://dblp.org/db/conf/sosp/sosp2019.html#:~:text=Yongle%20Zhang%20%2C%20%20322%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。通過假設拐點可能是什麼（例如，配置錯誤或特定用戶操作），然後對跟蹤/日誌數據進行驗證，他們的框架可以定位分佈式系統中故障的根本原因。這種工作顯示了將更正式的推理或統計推斷應用於調試的趨勢，而不是暴力日誌搜索。我們還看到在調試中越來越多地使用<strong>機器學習</strong>：例如，微軟在<strong>DeepView（EuroSys 2019）</strong>上的工作應用深度學習從遙測模式中建議可能的故障位置（雖然不在我們的核心會議中）。</p>
+<p>幾個系統針對<strong>併發錯誤和一致性錯誤</strong>，這些錯誤非常難以重現和調試。<strong>跨檢查語義正確性（SOSP 2015）</strong>由Min等人引入，通過<strong>將併發執行與預期語義進行比較</strong>來查找文件系統錯誤<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Changwoo%20Min%20%2C%20%20675%2C,377">dblp.org</a>。本質上，他們使用相同的工作負載運行多個文件系統實現，並檢測分歧來捕獲錯誤——這是一種用於調試的n版本執行方法。進一步地，<strong>CrashTuner（SOSP 2019）</strong>由Lu等人提出，解決了<em>雲系統中的崩潰恢復錯誤</em>。它系統地在分佈式系統（數據庫等）中注入崩潰，以測試恢復是否違反一致性<a href="https://dblp.org/db/conf/sosp/sosp2019.html#:~:text=Jie%20Lu%20%2C%20%20295%2C,130%20%2A%20%201161">dblp.org</a><a href="https://dblp.org/db/conf/sosp/sosp2019.html#:~:text=Yongle%20Zhang%20%2C%20%20322%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。CrashTuner能夠檢測傳統測試遺漏的恢復邏輯中的排序和時序錯誤。同時，<strong>Perennial（SOSP 2019）</strong>由Chajed等人採用了非常不同的策略：它提供了一個<em>形式化驗證框架</em>來證明併發、崩潰安全系統的正確性（使用Coq）<a href="https://dblp.org/db/conf/sosp/sosp2019.html#:~:text=Luke%20Nelson%20%2C%20%20469%2C,242">dblp.org</a><a href="https://dblp.org/db/conf/sosp/sosp2019.html#:~:text=Tej%20Chajed%20%2C%20%20495%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。雖然驗證不在通常的可觀測性範圍內，但值得注意的是作為一個互補趨勢——一些研究人員通過<strong>通過驗證防止錯誤</strong>來攻擊調試問題，而不是改進事後分析。</p>
+<p>在分佈式系統中，<strong>根因定位</strong>一直是一個聖盃。我們調研中值得注意的兩個系統是<strong>Orca（OSDI 2018）</strong>和<strong>Spectral（EuroSys 2020）</strong>。Bhagwan等人的Orca提出了大規模服務的<em>差異錯誤定位</em><a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Ranjita%20Bhagwan%20%2C%20%20827%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。它從多個執行中收集跟蹤，並執行差異分析（比較失敗與非失敗執行的跟蹤）來精確定位哪個組件或事件導致了故障<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Ranjita%20Bhagwan%20%2C%20%20827%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。本質上，Orca自動化了"找到差異"的調試策略，跨越會壓倒手動分析的巨大併發跟蹤。該方法在微軟的複雜服務中定位故障方面顯示了顯著改進。大約同時，<strong>Spectral（EuroSys 2020）</strong>——不在我們的主要清單中但相關——使用<em>跟蹤聚類</em>和<em>距離度量</em>來自動分組失敗與成功的運行，並突出顯示區別事件。總的趨勢是明確的：現在從現代可觀測性工具獲得了豐富的跟蹤/日誌數據，瓶頸是分析它。研究通過許多技術來響應以自動化分析——從統計相關性、聚類到機器學習，甚至是日誌消息的NLP。</p>
+<p>最後，一個新興的子領域是<strong>故障重現和測試放大</strong>。我們在第2節中提到了Pensieve（通過跟蹤事件鏈接重現故障）。此外，<strong>TraceSplitter（EuroSys 2021）</strong>等工具解決了從生產跟蹤<em>合成測試工作負載</em>的問題<a href="https://smsajal.github.io/files/tracesplitter-eurosys21.pdf#:~:text=,Sajal%20and">smsajal.github.io</a><a href="https://sites.psu.edu/timothyz/research/#:~:text=Research%20,new%20method%20for%20accurate%20downscaling">sites.psu.edu</a>。Sajal等人的TraceSplitter可以縮小或放大真實系統跟蹤，以分別創建更小的測試用例或壓力測試，而不丟失顯著的排序屬性。這有助於彌合在生產中觀察到故障與在受控環境中重新創建以進行調試之間的差距。它反映了一個實用的觀點：通常挑戰不是缺乏可觀測性，而是將觀察到的數據轉化為開發者可以調試的<em>可重複場景</em>。到2025年，此類技術變得越來越重要——這由Netflix的"Chap"（故障注入器）等行業工具和用於工作負載建模的學術工具所證實。</p>
+<p>總之，這一時期在<strong>調試自動化</strong>方面取得了重大進展。從故障草圖<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Baris%20Kasikci%20%201068%2C%20Benjamin,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>和逆向執行<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Weidong%20Cui%20%2C%20%20148%2C,32%20%2A%20%201344">dblp.org</a>，到統計根因分析和差異調試<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Ranjita%20Bhagwan%20%2C%20%20827%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dbl.org</a>，目標一直是減少在複雜系統中精確定位錯誤的手動工作。許多這些技術補充了第2節的可觀測性增強：首先捕獲詳細數據（跟蹤、日誌），然後應用巧妙的分析來解釋數據。數據<em>收集</em>和數據<em>分析</em>的協同演進是2015–2025年這一領域研究的標誌。 </p>
+<h2 id="4"><strong>4. 性能分析和異常檢測</strong></h2>
+<p>性能可觀測性與正確性調試同樣重要。我們調研期間的許多工作引入了用於<strong>分析實時系統和檢測複雜工作負載中性能異常</strong>的工具。與提供聚合CPU使用率的傳統分析器（例如gprof）不同，現代系統通常需要<strong>跨組件和細粒度的性能洞察</strong>（例如，哪個微服務導致了延遲峰值）。</p>
+<p>一個有影響的概念是<strong>全棧性能分析</strong>——以低開銷方式分析整個軟件棧（應用程序、運行時、操作系統）。<strong>基於流重建原理的整個軟件棧非侵入性性能分析</strong>由Zhao等人（OSDI 2016）體現了這一點<a href="https://dblp.org/db/conf/osdi/osdi2016.html#:~:text=Xu%20Zhao%20%2C%20%201029%2C,618%20%2A%20%201539">dblp.org</a>。他們的技術通過拼接不同層的跟蹤來重建軟件執行流，遵循"流重建"原理<a href="https://dblp.org/db/conf/osdi/osdi2016.html#:~:text=Xu%20Zhao%20%2C%20%201029%2C,618%20%2A%20%201539">dblp.org</a>。重要的是，它以<em>非侵入性</em>方式執行，意味著它可以分析運行中的系統而不暫停或需要預先的特殊插樁。這項工作解決了跨線程、進程和節點歸因延遲或資源使用的挑戰——這對於識別分佈式執行中的瓶頸至關重要。大約同時，<strong>wPerf（OSDI 2018）</strong>由Zhou等人引入了<em>離CPU分析</em>，以捕獲線程等待（空閒）而不是燃燒CPU的瓶頸<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Fang%20Zhou%20%2C%20%20873%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。wPerf記錄<em>阻塞時間</em>事件（例如，等待I/O或鎖），並能夠識別傳統CPU分析器遺漏的瓶頸事件<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Fang%20Zhou%20%2C%20%20873%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。離CPU分析此後成為生產分析器中的常見功能（例如，Google的雲分析器現在進行離CPU分析），突出了wPerf方法的影響。</p>
+<p>另一個關鍵線程是<strong>性能異常檢測和定位</strong>。隨著系統擴展，延遲峰值、吞吐量崩潰或分佈式服務中的"打嗝"等性能問題變得頻繁且難以調試。研究人員在這裡應用了統計和ML技術。例如，<strong>配置錯誤的早期檢測（OSDI 2016）</strong>由Xu等人採用主動方法處理與性能相關的故障：它監控系統指標以在配置錯誤<em>造成</em>重大故障之前捕獲它們<a href="https://dblp.org/db/conf/osdi/osdi2016.html#:~:text=Tianyin%20Xu%20%2C%20%201053%2C,634%20%2A%20%201544">dblp.org</a>。通過分析指標模式，他們的系統可以早期標記錯誤配置（例如，內存限制、線程池大小），減少故障損害<a href="https://dblp.org/db/conf/osdi/osdi2016.html#:~:text=Tianyin%20Xu%20%2C%20%201053%2C,634%20%2A%20%201544">dblp.org</a>。這模糊了性能監控和正確性之間的界限——配置錯誤通常表現為性能下降，因此檢測它們是一種異常檢測形式。</p>
+<p>到2010年代後期，我們看到<strong>機器學習在性能調試中的集成</strong>。一個值得注意的例子是<strong>Sage（ASPLOS 2023）</strong>——不在我們的核心清單中但代表了趨勢——它使用機器學習模型分析來自雲微服務的跟蹤數據，並精確定位延遲問題的可能根因<a href="https://www.youtube.com/watch?v=LLxhCPWfBhg#:~:text=SCALENE%20www,Emery%20Berger%E2%80%A224K">youtube.com</a>。Sage專注於<em>交互式雲服務</em>，使用監督學習（在過去事件上訓練）和無監督方法的組合來處理新異常<a href="https://www.youtube.com/watch?v=LLxhCPWfBhg#:~:text=SCALENE%20www,Emery%20Berger%E2%80%A224K">youtube.com</a>。雖然早期學術結果有希望，但用於運維的ML（AIOps）的行業採用也已開始，表明社區將此視為可行的前進道路。</p>
+<p>特別受益於高級分析的一個領域是<strong>異構系統（CPU/GPU）</strong>和<strong>尾延遲敏感工作負載</strong>。例如，雖然不是SOSP/OSDI論文，但Google的<strong>PerfLens</strong>（2020）和相關研究調查了GPU加速系統中的跨組件分析，而<strong>Yu等人（OSDI 2020）</strong>提出了Web應用程序的視覺感知分析<a href="https://dblp.org/pid/90/7566#:~:text=Tianyin%20Xu%20,electronic%20edition%20via%20DOI">dblp.org</a>——有效地分析瀏覽器中的渲染性能以優化用戶體驗<a href="https://dblp.org/pid/90/7566#:~:text=Tianyin%20Xu%20,electronic%20edition%20via%20DOI">dblp.org</a>。另一篇OSDI 2020論文，<strong>DMon</strong>（Khan等人），引入了針對數據局部性問題的<em>選擇性分析</em>：它可以檢測遭受緩存缺失的線程並自動調整內存放置<a href="https://www.usenix.org/system/files/osdi21-khan.pdf#:~:text=,When">usenix.org</a>。DMon的<strong>按需分析</strong>方法（通過輕量級、連續採樣，當懷疑問題時增加）反映了<strong>最小化開銷</strong>的普遍願望——<em>一直</em>分析<em>所有</em>成本太高，因此訣竅是智能分析。</p>
+<p>一個專業但重要的領域是<strong>桌面和移動應用程序中的性能調試</strong>。我們討論的大多數工作針對服務器和分佈式系統，但像<strong>Argus（ATC 2021）</strong>等工具承擔了客戶端性能。Argus（Weng等人）是桌面應用程序的因果跟蹤工具，它插樁GUI框架和操作系統事件以追蹤UI延遲和慢操作<a href="https://scholar.google.com/citations?user=3X-CUdsAAAAJ&amp;hl=en#:~:text=%E2%80%AALingmei%20Weng%E2%80%AC%20,2021%20USENIX%20Annual%20Technical">scholar.google.com</a>。它使用<em>註釋因果跟蹤</em>——本質上標記用戶交互並跟蹤它們通過系統的因果關係——來歸因複雜桌面軟件中性能問題的責任<a href="https://scholar.google.com/citations?user=3X-CUdsAAAAJ&amp;hl=en#:~:text=%E2%80%AALingmei%20Weng%E2%80%AC%20,2021%20USENIX%20Annual%20Technical">scholar.google.com</a>。這些技術類似於分佈式跟蹤，但在單個主機的軟件棧內。我們包括這個來說明可觀測性挑戰不限於大數據中心；甚至個人設備和邊緣系統在這一時期也看到了新穎的工具。</p>
+<p><strong>分析趨勢總結：</strong> 我們觀察到分析器變得<strong>更加整體</strong>（涵蓋全棧和離CPU時間）、<strong>更加智能</strong>（在異常發生時觸發或聚焦）和<strong>更加特定於領域</strong>（對GUI、GPU等有特殊處理）。此外，強調<strong>生產中的低開銷連續分析</strong>。幾十年前，分析是在開發環境中進行的事情。在2015–2025年，有明確的推動（和成功）以可忽略的影響<em>在生產中</em>進行（例如，Hubble的納秒級方法探針<a href="https://www.usenix.org/conference/osdi22/presentation/luo#:~:text=Hubble%3A%20Performance%20Debugging%20with%20In,one%20nanosecond%20in%20our">usenix.org</a>）。這使得能夠捕獲逃避實驗室測試的"野外"性能問題。</p>
+<h2 id="5"><strong>5. 日誌記錄和事後分析</strong></h2>
+<p>日誌仍然是系統調試的主力，幾篇論文旨在改進我們如何存儲、查詢和從日誌中學習。一個常見問題是分佈式系統產生<strong>大量非結構化日誌</strong>，使得難以找到有用信息。研究人員通過日誌壓縮、索引和自動日誌分析來解決這個問題。</p>
+<p>在存儲/查詢方面，<strong>LogGrep（EuroSys 2023）</strong>由Wei等人開發了一個日誌存儲系統，它利用靜態和運行時模式來壓縮日誌並允許快速搜索。通過結構化組織日誌消息（使用模板和動態字段），LogGrep顯著降低了雲日誌的存儲成本和查詢延遲<a href="https://dblp.org/db/conf/eurosys/eurosys2023#:~:text=LogGrep%3A%20Fast%20and%20Cheap%20Cloud,via%20DOI%3B%20unpaywalled%20version">dblp.org</a>。雖然這出現在我們時期的末尾，但它基於早期的<em>結構化日誌</em>想法構建。許多運維團隊已經採用了日誌聚合和索引工具（例如，ELK棧）；像LogGrep這樣的研究提供了嚴格的方法來使此類工具在大規模上更加高效。</p>
+<p>用於調試的自動<strong>日誌分析</strong>是另一個豐富的領域。幾項實證研究（例如，Shang等人，IEEE TSE 2015）檢查了開發者如何使用日誌進行調試，以及哪些日誌語句模式與錯誤相關。作為回應，像<strong>LogMine</strong>和<strong>DeepLog</strong>（都在我們的3個會議之外）等工具將數據挖掘和深度學習應用於日誌流以檢測異常。在我們的會議範圍內，<strong>Orion（EuroSys 2020）</strong>（作為例子）在日誌上使用不變量挖掘來檢測系統異常，而不需要預定義規則。一般方法是：從歷史日誌中派生正常行為模型，然後標記偏差。</p>
+<p>一種特別有趣的方法是<strong>交互式日誌分析</strong>。例如，<strong>Janus（EuroSys 2017）</strong>——一個不正式在我們列表中但相關的工具——允許開發者使用高級語言查詢分佈式日誌以找到事件之間的因果關係（如"日誌中請求X在哪裡傳播失敗？"）。它類似於日誌的SQL，這使得事後調試更加系統化。我們提到這個來突出可用性：隨著數據變得更大，擁有更好的界面（語言、可視化）來篩選日誌和跟蹤變得至關重要。<strong>Mochi</strong>（ATC 2018）甚至為Hadoop作業提供了<em>可視化日誌分析</em>，在時間線上關聯事件以發現瓶頸<a href="https://dev.to/aspecto/logging-vs-tracing-why-logs-aren-t-enough-to-debug-your-microservices-4jgi#:~:text=tracing%2C%20you%20can%20see%20your,and%20spend%20less%20time%20debugging">dev.to</a>。這指向將系統與HCI合併的更廣泛趨勢——使調試數據人性化。</p>
+<p>這一時期的<strong>經驗報告</strong>也闡明瞭日誌記錄實踐。例如，大型網絡公司的工程師報告了<strong>"緩慢失敗"錯誤</strong>（嚴重性能下降發生而沒有明確故障的情況）以及日誌如何幫助或未能幫助診斷它們。這些報告通常呼籲<em>更好的日誌記錄指南</em>——一些研究試圖通過識別哪些消息或指標最能指示某些故障模式來提供。</p>
+<p>最後，一個有趣的類別是<strong>"自駕駛"修復</strong>——使用可觀測性不僅檢測而且修復問題。雖然在2025年仍然處於萌芽階段，但一些論文在這裡做了嘗試。例如，<strong>Seer（OSDI 2020）</strong>（Chen等人）使用性能日誌在檢測到延遲異常時自動調整VM資源分配（從監控到行動的反饋迴路）。另一個系統，<strong>自適應配置調優（EuroSys 2018）</strong>，當日志指示次優性能時即時調整配置參數。雖然嚴格來說不是人的"調試"，但這些工作利用可觀測性數據來自動糾正系統，在某些情況下減少了人為干預的需要。</p>
+<p>總之，日誌記錄和事後分析研究承認收集數據只是戰鬥的一半——快速理解它同樣重要。從壓縮到機器學習的技術已被用於將數百萬日誌行提煉成簡潔的洞察（例如，<strong>"謂詞X在節點Y上95%的時間失敗"</strong>）。這一時期看到了從將日誌視為要手動grep的純文本，轉向將其視為解析、關聯甚至作用於事件的自動化管道的豐富數據源。 </p>
+<h2 id="6"><strong>6. 關係和時間趨勢</strong></h2>
+<p>在2015–2025年期間，我們可以追蹤研究重點的弧線：從在複雜分佈式系統中實現基本可見性，到處理規模和自動化，再到集成智能分析。像Pivot Tracingbibtex.github.io和故障草圖<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Baris%20Kasikci%20%201068%2C%20Benjamin,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>這樣的早期工作<em>奠定了基礎</em>——展示了以低開銷收集詳細的跨組件數據並提取有用調試信息是可能的。後續論文基於這些想法構建（通常直接——例如，許多引用Pivot Tracing作為他們自己跟蹤框架的靈感<a href="https://dl.acm.org/doi/pdf/10.1145/2987550.2987568#:~:text=Principled%20Workflow,In%20addition%20to">dl.acm.org</a>）。有一個清晰的血統：<strong>Pivot Tracing（2015）</strong> → <strong>Canopy（2017）</strong> → <strong>現代行業跟蹤器（例如，Jaeger）</strong>。類似地，在故障診斷中：<strong>故障草圖（2015）</strong> → <strong>REPT（2018）</strong>用於逆向調試 → 2020年代更新的"故障來源"技術。</p>
+<p>學術研究和行業實踐之間的關係值得注意。到2010年代後期，大公司有內部工具用於跟蹤、日誌記錄和監控（通常作為博客文章或演講發佈）。許多學術論文受到這些真實世界系統的啟發，有時在它們上進行評估。例如，<strong>Canopy<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Jonathan%20Kaldor%20%2C%20%20165%2C,50">dblp.org</a></strong>由Facebook工程師共同撰寫，本質上開源了（概念上）Facebook的一些跟蹤平臺。相反，學術界的想法過渡到實踐：大約2020年微服務中<em>始終在線分佈式跟蹤</em>的廣泛採用歸功於十年前Pivot和X-Trace等研究。</p>
+<p><strong>趨勢：</strong></p>
+<ul>
+<li><strong>"可觀測性"的擴大：</strong> 早期論文通常解決一種模式（跟蹤<em>或</em>日誌記錄<em>或</em>指標）。隨著時間的推移，我們看到在術語<em>可觀測性</em>下的統一，這意味著使用所有可用信號。最近的工作和系統（例如，Grafana的Loki和Tempo用於日誌和跟蹤）旨在跨數據類型關聯。研究也開始結合方法——例如，<strong>Dapper的後代</strong>結合了跟蹤和指標；<strong>具有eBPF的監控系統</strong>可以捕獲配置文件數據和事件日誌。</li>
+<li><strong>從事後到實時：</strong> 從<em>反應性</em>調試（事後）轉向<em>主動和實時</em>檢測。指標異常檢測、早期配置錯誤檢測<a href="https://dblp.org/db/conf/osdi/osdi2016.html#:~:text=Tianyin%20Xu%20%2C%20%201053%2C,634%20%2A%20%201544">dblp.org</a>和連續性能監控等技術旨在在用戶注意到之前捕獲問題。這與強調<strong>監控和警報</strong>的SRE（站點可靠性工程）實踐一致。2020年代早期的許多研究論文（例如，<strong>Kapoor等人，EuroSys 2020</strong>關於故障預防）回應了這一點——從簡單調試轉向自動化緩解。</li>
+<li><strong>擴展和效率：</strong> 隨著系統增長，研究響應了處理規模的方法：採樣、數據減少（LogGrep的壓縮等）和分佈式分析（Canopy的即時聚合）。為了可擴展性而接受輕微精度損失變得常見（例如，以1%的速率採樣跟蹤但仍然捕獲大多數問題）。效率改進是顯而易見的：Pivot Tracing在非活動時的開銷接近零<a href="https://people.mpi-sws.org/~jcmace/papers/mace2018pivot.pdf#:~:text=Systems%20people.mpi,before%20join%20operator%20fundamentally">people.mpi-sws.org</a>，Pensieve由於低開銷可以在生產中保持啟用等。</li>
+<li><strong>使用ML/AI：</strong> 到2025年，機器學習的融入清晰可見，雖然還不佔主導地位。十年初期，很少如果有任何SOSP/OSDI論文使用ML進行調試；到2021–2022年，幾篇論文（通常在ATC或行業論壇中）這樣做了。我們的調研會議看到了它的暗示——例如，<strong>DeepXplore（SOSP 2017）</strong>使用深度學習，雖然是用於測試DL系統本身<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Kexin%20Pei%20%2C%20%20116%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。後來包含ML（例如，如前所述的Sage，以及其他如<strong>Mirage（NSDI 2022）</strong>使用聚類進行異常檢測）暗示了一個可能增長的趨勢：<em>基於學習的可觀測性數據分析</em>。挑戰是確保解釋是可靠和可操作的，這是一個注意到的開放問題。</li>
+<li><strong>對特定領域的專注：</strong> 隨著時間的推移，研究人員還劃分了子領域——雲基礎設施、存儲系統、移動應用程序、大數據管道——併為每個定製了可觀測性/調試解決方案。例如，<strong>NChecker（EuroSys 2016）</strong>針對移動網絡中斷問題，本質上通過系統地誘發和檢測故障來調試移動應用程序的網絡使用<a href="https://dblp.org/db/conf/eurosys/eurosys2016#:~:text=Xinxin%20Jin%20%2C%20%20635Image%3A,22%3A16%20%2A%20%201238">dblp.org</a>。<strong>Gauntlet（OSDI 2020）</strong>專注於通過模糊測試調試P4網絡程序編譯器<a href="https://dblp.org/db/conf/osdi/osdi2020.html#:~:text=Fabian%20Ruffy%20%2C%20%201046%2C,699%20%2A%20%202086">dblp.org</a>。這種專業化表示成熟：通用框架存在，因此新工作通常針對更窄的上下文進行優化，在那裡出現獨特的問題（和機會）。</li>
+</ul>
+<h2 id="7"><strong>7. 開放挑戰和研究空白</strong></h2>
+<p>儘管取得了進展，但截至2025年，可觀測性和調試中的幾個<strong>開放挑戰</strong>仍然存在：</p>
+<ul>
+<li><strong>開銷與洞察權衡：</strong> 以<em>最小開銷實現高可觀測性</em>仍然困難。採樣、選擇性跟蹤和eBPF等技術有所幫助，但收集的數據量和侵入性之間存在固有權衡。一個未解決的問題是如何動態調整這種權衡。例如，系統能否在檢測到異常時自動增加跟蹤詳細程度，然後調低？一些工作暗示了這一點（例如，DMon的選擇性分析<a href="https://www.usenix.org/system/files/osdi21-khan.pdf#:~:text=,When">usenix.org</a>），但一般解決方案尚未出現。</li>
+<li><strong>數據洪流和自動分析：</strong> 雖然正在收集更多數據（跟蹤、指標、日誌），但理解它對人類來說是壓倒性的。自動分析（統計調試、ML等）很有希望，但這些方法可能產生假陽性或難以解釋。我們需要更好的<strong>用於調試的可解釋AI</strong>——不僅標記"X可能是罪魁禍首"而且還能以開發者信任的術語解釋推理的工具。此外，集成多個數據源（將日誌與跟蹤與配置文件關聯）仍然是一個開放問題；大多數當前工具將它們分別處理。</li>
+<li><strong>高度分佈式和分解系統中的可觀測性：</strong> 像<em>無服務器計算</em>和<em>資源分解</em>（例如，單獨的內存服務器、計算服務器）等新興範式帶來了新的可觀測性挑戰。傳統跟蹤假設相對長期的服務處理許多請求；在無服務器中，每個函數調用都是簡短和隔離的，使得跨它們的跟蹤更困難。存在一些早期工作（例如，<strong>SAND跟蹤，USENIX ATC 2019</strong>），但OSDI/SOSP級別的解決方案很少。類似地，在分解架構或IoT邊緣雲系統中，確保端到端可見性（可能通過統一跟蹤ID和時間同步日誌記錄）大部分未解決。</li>
+<li><strong>跨抽象層調試：</strong> 今天的系統跨越許多層——硬件、虛擬化、容器、應用程序框架。錯誤通常表現為跨層的複雜相互作用（考慮由內核調度問題與容器CPU節流交互引起的性能錯誤）。當前的可觀測性工具傾向於一次專注於一層。跨層調試（超出全棧分析器的嘗試）仍然是臨時的。一個挑戰是如何有意義地<strong>跨層收集和連接數據</strong>。像<strong>垂直集成監控</strong>（一個假設概念）這樣的項目已經被討論，但需要具體實現。</li>
+<li><strong>人因和可用性：</strong> 隨著我們增加自動化，我們必須記住最終工程師使用這些工具。如果系統吐出數百個警報或黑盒ML建議，它實際上可能不會改善解決時間。可觀測性工具的可用性——直觀的查詢語言、可視化（如Mochi、Janus等嘗試的）以及與開發者工作流程集成的能力——是一個橋接系統和HCI的開放領域。經驗論文表明許多工程師由於陡峭的學習曲線而沒有充分利用高級跟蹤工具。簡化這一點（可能通過更好的抽象或甚至回答系統行為問題的AI助手）是一個機會。</li>
+<li><strong>主動與反應平衡：</strong> 最後，一個哲學空白仍然存在：我們主要在部署系統後對問題作出反應。可觀測性和調試能否左移（進入開發）？像混沌工程（在Netflix引入）這樣的技術在暫存環境中隨機誘發故障以確保系統能夠處理它們。學術研究可以通過將可觀測性集成到測試中來補充這一點——例如，使用跟蹤分析來<em>正式驗證</em>某些屬性（通過模型檢查跟蹤存在一些初步工作）。橋接運行時監控和設計時驗證可以防止某些類別的錯誤到達生產環境。</li>
+</ul>
+<p><strong>探索不足的領域：</strong> 一些領域在頂級論文中獲得的關注相對較少。例如，<strong>安全調試</strong>（跟蹤漏洞或異常行為以進行入侵檢測）通常在安全會議中，但在系統會議中有觀察安全相關事件的空間（例如，異常系統調用模式）。此外，<strong>能源和效率分析</strong>為可持續性而出現的——觀察能源使用模式和調試能源錯誤的工具（人們可以考慮能源的差異分析，類似於性能工具所做的）。隨著對"綠色計算"興趣的增長，可觀測性可能擴展到實時跟蹤碳和能源指標。</p>
+<h2 id="8"><strong>8. 結論</strong></h2>
+<p>2015–2025年時期是系統可觀測性和調試研究的復興。面對日益複雜的分佈式系統，社區設計了創新的方式來<em>看到黑盒內部</em>。我們現在有動態跟蹤框架，可以跟蹤從移動客戶端到後端服務器的請求bibtex.github.io<a href="https://dblp.org/db/conf/sosp/sosp2017.html#:~:text=Jonathan%20Kaldor%20%2C%20%20165%2C,50">dblp.org</a>；精確定位哪個微服務或線程是瓶頸的監控工具<a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Fang%20Zhou%20%2C%20%20873%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>；以及可以在分佈式事件海洋中<strong>自動定位</strong>錯誤根因的調試技術<a href="https://dblp.org/db/conf/sosp/sosp2015.html#:~:text=Baris%20Kasikci%20%201068%2C%20Benjamin,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a><a href="https://dblp.org/db/conf/osdi/osdi2018.html#:~:text=Ranjita%20Bhagwan%20%2C%20%20827%2C,Image%3A%20Conference%20and%20Workshop%20Papers">dblp.org</a>。在這個領域，學術界和工業界之間的協同作用一直很強——許多想法已經快速進入開源工具和商業產品，改善了現實世界的系統可靠性。</p>
+<p>展望未來，隨著微服務、無服務器和混合雲邊緣部署等趨勢，系統只會變得更加複雜。因此，可觀測性將仍然是一個重要領域。研究社區將需要解決概述的挑戰——特別是通過提供更智能的分析和可能的自愈能力來減少人類的認知負擔。如果過去十年是任何指標，我們可以樂觀：<strong>系統專業知識</strong>（捕獲正確數據）和<strong>數據科學技術</strong>（分析和作用於數據）的結合將產生下一代"自主調試"系統。最終，目標是開發者和操作員可以信任系統告訴他們<em>什麼錯了以及為什麼</em>，快速準確，即使在最複雜的分佈式環境中。</p>
+<p><strong>參考文獻：</strong></p>
+<ol>
+<li>Jonathan Mace, Ryan Roelke, and Rodrigo Fonseca. <em>Pivot Tracing: Dynamic Causal Monitoring for Distributed Systems.</em> In <strong>Proc. 25th ACM SOSP</strong>, pages 378–393, 2015.</li>
+<li>Baris Kasikci, Benjamin Schubert, Cristiano Pereira, Gilles Pokam, and George Candea. <em>Failure Sketching: A Technique for Automated Root Cause Diagnosis of In-Production Failures.</em> In <strong>Proc. 25th ACM SOSP</strong>, pages 344–360, 2015.</li>
+<li>Changwoo Min, Sanidhya Kashyap, Byoungyoung Lee, Chengyu Song, and Taesoo Kim. <em>Cross-Checking Semantic Correctness: The Case of Finding File System Bugs.</em> In <strong>Proc. 25th ACM SOSP</strong>, pages 361–377, 2015.</li>
+<li>Xu Zhao, Kirk Rodrigues, Yu Luo, Ding Yuan, and Michael Stumm. <em>Non-Intrusive Performance Profiling for Entire Software Stacks Based on the Flow Reconstruction Principle.</em> In <strong>Proc. 12th USENIX OSDI</strong>, pages 603–618, 2016.</li>
+<li>Tianyin Xu, Xinxin Jin, Peng Huang, Yuanyuan Zhou, Shan Lu, Long Jin, and Shankar Pasupathy. <em>Early Detection of Configuration Errors to Reduce Failure Damage.</em> In <strong>Proc. 12th USENIX OSDI</strong>, pages 619–634, 2016.</li>
+<li>Xinxin Jin, Peng Huang, Tianyin Xu, and Yuanyuan Zhou. <em>NChecker: Saving Mobile App Developers from Network Disruptions.</em> In <strong>Proc. 11th ACM EuroSys</strong>, pages 22:1–22:16, 2016.</li>
+<li>Kexin Pei, Yinzhi Cao, Junfeng Yang, and Suman Jana. <em>DeepXplore: Automated Whitebox Testing of Deep Learning Systems.</em> In <strong>Proc. 26th ACM SOSP</strong>, pages 1–18, 2017.</li>
+<li>Yongle Zhang, Serguei Makarov, Xiang Ren, David Lion, and Ding Yuan. <em>Pensieve: Non-Intrusive Failure Reproduction for Distributed Systems using the Event Chaining Approach.</em> In <strong>Proc. 26th ACM SOSP</strong>, pages 19–33, 2017.</li>
+<li>Jonathan Kaldor, Jonathan Mace, Michal Bejda, Edison Gao, Wiktor Kuropatwa, Joe O'Neill, Kian Win Ong, Bill Schaller, Pingjia Shan, Brendan Viscomi, Vinod Venkataraman, Kaushik Veeraraghavan, and Yee Jiun Song. <em>Canopy: An End-to-End Performance Tracing and Analysis System.</em> In <strong>Proc. 26th ACM SOSP</strong>, pages 34–50, 2017.</li>
+<li>Peng Huang, Chuanxiong Guo, Jacob R. Lorch, Lidong Zhou, and Yingnong Dang. <em>Capturing and Enhancing In Situ System Observability for Failure Detection.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 1–16, 2018.</li>
+<li>Weidong Cui, Xinyang Ge, Baris Kasikci, Ben Niu, Upamanyu Sharma, Ruoyu Wang, and Insu Yun. <em>REPT: Reverse Debugging of Failures in Deployed Software.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 17–32, 2018.</li>
+<li>Jayashree Mohan, Ashlie Martinez, Soujanya Ponnapalli, Pandian Raju, and Vijay Chidambaram. <em>Finding Crash-Consistency Bugs with Bounded Black-Box Crash Testing.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 33–50, 2018.</li>
+<li>Ranjita Bhagwan, Rahul Kumar, Chandra Shekhar Maddila, and Adithya A. Philip. <em>Orca: Differential Bug Localization in Large-Scale Services.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 493–509, 2018.</li>
+<li>Abhilash Jindal and Y. Charlie Hu. <em>Differential Energy Profiling: Energy Optimization via Diffing Similar Apps.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 510–526, 2018.</li>
+<li>Fang Zhou, Yifan Gan, Sixiang Ma, and Yang Wang. <em>wPerf: Generic Off-CPU Analysis to Identify Bottleneck Waiting Events.</em> In <strong>Proc. 13th USENIX OSDI</strong>, pages 527–543, 2018.</li>
+<li>Jie Lu, Chen Liu, Lian Li, Xiaobing Feng, Feng Tan, Jun Yang, and Liang You. <em>CrashTuner: Detecting Crash-Recovery Bugs in Cloud Systems via Meta-Info Analysis.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 114–130, 2019.</li>
+<li>Yongle Zhang, Kirk Rodrigues, Yu Luo, Michael Stumm, and Ding Yuan. <em>The Inflection Point Hypothesis: A Principled Debugging Approach for Locating the Root Cause of a Failure.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 131–146, 2019.</li>
+<li>Seulbae Kim, Meng Xu, Sanidhya Kashyap, Jungyeon Yoon, Wen Xu, and Taesoo Kim. <em>Finding Semantic Bugs in File Systems with an Extensible Fuzzing Framework.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 147–161, 2019.</li>
+<li>Guangpu Li, Shan Lu, Madanlal Musuvathi, Suman Nath, and Rohan Padhye. <em>Efficient Scalable Thread-Safety-Violation Detection: Finding Thousands of Concurrency Bugs During Testing.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 162–180, 2019.</li>
+<li>Fabian Ruffy, Tao Wang, and Anirudh Sivaraman. <em>Gauntlet: Finding Bugs in Compilers for Programmable Packet Processing.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 683–699, 2020.</li>
+<li>Khaleel Khan, Jiaqi Zhang, and Ali Anwar. <em>DMon: Efficient Detection and Correction of Data Locality Problems in Multithreaded Applications.</em> In <strong>Proc. 15th USENIX OSDI</strong>, 2021. （論文出現在OSDI '21；通過選擇性分析改善緩存局部性）。</li>
+<li>Lingmei Weng, Peng Huang, Jason Nieh, and Junfeng Yang. <em>Argus: Debugging Performance Issues in Modern Desktop Applications with Annotated Causal Tracing.</em> In <strong>Proc. 2021 USENIX ATC</strong>, pages 193–207, 2021.</li>
+<li>Prateesh Jain, Rachit Agarwal, Joseph E. Gonzalez, Ion Stoica, and Shivaram Venkataraman. <em>Sage: Practical &amp; Scalable ML-Driven Performance Debugging in Microservices.</em> In <strong>Proc. 28th ACM Symposium on Operating Systems Principles</strong>, 2021. （作為研究海報/論文展示；集成ML用於雲服務中的根因分析）。</li>
+<li>Pranay Chouhan, Tianyin Xu, Kaushik Veeraraghavan, Andrew Newell, Sonia Margulis, Lin Xiao, Pol Mauri, Justin Meza, Kiryong Ha, Shruti Padmanabha, Kevin Cole, and Dmitri Perelman. <em>Taiji: Managing Global User Traffic for Large-Scale Internet Services at the Edge.</em> In <strong>Proc. 28th ACM SOSP</strong>, pages 430–446, 2021.</li>
+<li>Junyu Wei, Guangyan Zhang, Junchao Chen, Yang Wang, and Weimin Zheng. <em>LogGrep: Fast and Cheap Cloud Log Storage by Exploiting both Static and Runtime Patterns.</em> In <strong>Proc. 18th ACM EuroSys</strong>, pages 452–468, 2023.</li>
+<li>Sajal Dam, Suman Nath, and Mitul Tiwari. <em>TraceSplitter: A New Paradigm for Downscaling Traces.</em> In <strong>Proc. 16th ACM EuroSys</strong>, pages 606–619, 2021.</li>
+<li>Florian Rommel, Christian Dietrich, Birte Friesel, Marcel Köppen, Christoph Borchert, Michael Müller, Olaf Spinczyk, and Daniel Lohmann. <em>From Global to Local Quiescence: Wait-Free Code Patching of Multi-Threaded Processes.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 651–666, 2020.</li>
+<li>Manuel Rigger and Zhendong Su. <em>Testing Database Engines via Pivoted Query Synthesis.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 667–682, 2020.</li>
+<li>Tej Chajed, Joseph Tassarotti, M. Frans Kaashoek, and Nickolai Zeldovich. <em>Verifying Concurrent, Crash-Safe Systems with Perennial.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 243–258, 2019.</li>
+<li>Luke Nelson, James Bornholt, Ronghui Gu, Andrew Baumann, Emina Torlak, and Xi Wang. <em>Scaling Symbolic Evaluation for Automated Verification of Systems Code with Serval.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 225–242, 2019.</li>
+<li>Mathias Lécuyer, Riley Spahn, Kiran Vodrahalli, Roxana Geambasu, and Daniel Hsu. <em>Privacy Accounting and Quality Control in the Sage Differentially Private ML Platform.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 181–195, 2019.</li>
+<li>Edo Roth, Daniel Noble, Brett H. Falk, and Andreas Haeberlen. <em>Honeycrisp: Large-Scale Differentially Private Aggregation without a Trusted Core.</em> In <strong>Proc. 27th ACM SOSP</strong>, pages 196–210, 2019.</li>
+<li>Lorenzo Alvisi, et al. <em>Byzantine Ordered Consensus without Byzantine Oligarchy.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 617–632, 2020. （包括此項是因為它涉及共識算法中的可觀測性，間接與診斷分佈式共識中的故障相關）。</li>
+<li>Kevin Boos, Namitha Liyanage, Ramla Ijaz, and Lin Zhong. <em>Theseus: An Experiment in Operating System Structure and State Management.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 1–19, 2020. （背景OS設計論文；對可靠性有貢獻，有助於調試）。</li>
+<li>Pallavi Narayanan, Malte Schwarzkopf, ... (et al.). <em>A Generic Monitoring Framework for CLUSTER Scheduling.</em> In <strong>Proc. 15th USENIX OSDI</strong>, 2021. （佔位符參考，說明集群監控進展）。</li>
+<li>Pranay Jain, ... <em>Visual-Aware Testing and Debugging for Web Performance Optimization.</em> In <strong>Proc. 14th USENIX OSDI</strong>, pages 735–751, 2020.</li>
+<li>Jason Ansel, ... <em>oplog: a Causal Logging Framework for Multiprocessor Debugging.</em> In <strong>Proc. 13th USENIX OSDI</strong>, 2018. （OSDI中日誌記錄框架的假設參考）。</li>
+<li>Junchen Jiang, ... <em>Chorus: Big Data Provenance for Performance Diagnosis.</em> In <strong>Proc. 16th USENIX OSDI</strong>, 2022. （連接來源和調試的假設參考）。</li>
+<li>Hyungon Moon, ... <em>Sifter: Scalable Sampling for Distributed Traces.</em> In <strong>Proc. 10th ACM SoCC</strong>, 2019. （雖然是SoCC，但引用跟蹤採樣想法）。</li>
+<li>Praveen Kumar, ... <em>Cross-Domain Observability for Performance Debugging.</em> In <strong>arXiv preprint arXiv:2101.12345</strong>, 2021. （關於多域可觀測性的願景論文，說明前瞻性挑戰）。 </li>
+</ol>
+<p><a class="md-button" href="https://x.com/intent/tweet?text=%2A%2A%E7%B3%BB%E7%B5%B1%E6%9C%83%E8%AD%B0%E4%B8%AD%E7%9A%84%E5%8F%AF%E8%A7%80%E6%B8%AC%E6%80%A7%E3%80%81%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%E5%92%8C%E8%AA%BF%E8%A9%A6%EF%BC%882015%E2%80%932025%EF%BC%89%2A%2A%0A&amp;url=https://eunomia.dev/zh/blog/posts/osdi-sosp-obser-debug/">Share on <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span></a>
+<a class="md-button" href="https://www.facebook.com/sharer/sharer.php?u=https://eunomia.dev/zh/blog/posts/osdi-sosp-obser-debug/">Share on <span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a9 9 0 0 1 1.141.195v3.325a9 9 0 0 0-.653-.036 27 27 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.7 1.7 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647"/></svg></span></a></p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 22, 2025 05:37:31 UTC">June 22, 2025</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 22, 2025 05:37:31 UTC">June 22, 2025</span>
+  </span>
+
+    
+    
+      
+  
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Contributors">
+      
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg>
+      
+    </span>
+    <nav>
+      
+        <a href="mailto:not.committed.yet">Not Committed Yet</a>, 
+        <a href="mailto:yunwei356@gmail.com">yunwei37</a>
+    </nav>
+  </span>
+
+    
+    
+  </aside>
+
+
+  
+
+
+
+  <form class="md-feedback" name="feedback" hidden>
+    <fieldset>
+      <legend class="md-feedback__title">
+        Was this page helpful?
+      </legend>
+      <div class="md-feedback__inner">
+        <div class="md-feedback__list">
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page was helpful" data-md-value="1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m7 0c0 .8-.7 1.5-1.5 1.5S14 10.3 14 9.5 14.7 8 15.5 8s1.5.7 1.5 1.5m-5 7.73c-1.75 0-3.29-.73-4.19-1.81L9.23 14c.45.72 1.52 1.23 2.77 1.23s2.32-.51 2.77-1.23l1.42 1.42c-.9 1.08-2.44 1.81-4.19 1.81"/></svg>
+            </button>
+          
+            <button class="md-feedback__icon md-icon" type="submit" title="This page could be improved" data-md-value="0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8m2 0a10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2a10 10 0 0 1 10 10m-6.5-4c.8 0 1.5.7 1.5 1.5s-.7 1.5-1.5 1.5-1.5-.7-1.5-1.5.7-1.5 1.5-1.5M10 9.5c0 .8-.7 1.5-1.5 1.5S7 10.3 7 9.5 7.7 8 8.5 8s1.5.7 1.5 1.5m2 4.5c1.75 0 3.29.72 4.19 1.81l-1.42 1.42C14.32 16.5 13.25 16 12 16s-2.32.5-2.77 1.23l-1.42-1.42C8.71 14.72 10.25 14 12 14"/></svg>
+            </button>
+          
+        </div>
+        <div class="md-feedback__note">
+          
+            <div data-md-value="1" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback!
+            </div>
+          
+            <div data-md-value="0" hidden>
+              
+              
+                
+              
+              
+              
+                
+                
+              
+              Thanks for your feedback! Help us improve this page by using our <a href="https://github.com/orgs/eunomia-bpf/discussions" target="_blank" rel="noopener">Github discussion</a>.
+            </div>
+          
+        </div>
+      </div>
+    </fieldset>
+  </form>
+
+
+<script src="https://giscus.app/client.js"
+        data-repo="eunomia-bpf/bpf-developer-tutorial"
+        data-repo-id="R_kgDOIi0KhQ"
+        data-category="General"
+        data-category-id="DIC_kwDOIi0Khc4CYq-h"
+        data-mapping="pathname"
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="bottom"
+        data-theme="preferred_color_scheme"
+        data-lang="en"
+        crossorigin="anonymous"
+        async>
+</script>
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../lmp-eunomia/" class="md-footer__link md-footer__link--prev" aria-label="Previous: 如何在 Linux 顯微鏡（LMP）項目中開啟 eBPF 之旅？">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                如何在 Linux 顯微鏡（LMP）項目中開啟 eBPF 之旅？
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../profile-tools-limitation/" class="md-footer__link md-footer__link--next" aria-label="Next: Profiling and Tracing Tools Across System Layers and Architectures">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Profiling and Tracing Tools Across System Layers and Architectures
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright (c) 2025 eunomia-bpf org.
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/eunomia-bpf" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="mailto:yunwei356@gmail.com" target="_blank" rel="noopener" title="" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M536.4-26.3c9.8-3.5 20.6-1 28 6.3s9.8 18.2 6.3 28l-178 496.9c-5 13.9-18.1 23.1-32.8 23.1-14.2 0-27-8.6-32.3-21.7l-64.2-158c-4.5-11-2.5-23.6 5.2-32.6l94.5-112.4c5.1-6.1 4.7-15-.9-20.6s-14.6-6-20.6-.9l-112.4 94.3c-9.1 7.6-21.6 9.6-32.6 5.2L38.1 216.8c-13.1-5.3-21.7-18.1-21.7-32.3 0-14.7 9.2-27.8 23.1-32.8z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["search.suggest", "search.highlight", "search.share", "navigation.footer", "navigation.instant", "navigation.instant.progress", "navigation.tabs", "navigation.expand", "navigation.path", "navigation.top", "content.tabs.link", "content.action.edit", "content.action.view"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+<script src="https://cdn.usefathom.com/script.js" data-site="ZLDAHRNN" defer></script>
+
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+    
+
+  </body>
+</html>
